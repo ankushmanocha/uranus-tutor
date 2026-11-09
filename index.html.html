@@ -1,0 +1,616 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Uranus Tutor — CA Foundation Master</title>
+<style>
+:root{--bg:#f5f7fa;--card:#fff;--text:#18202a;--muted:#667085;--border:#d8dee8;--accent:#2563eb;--soft:#eef4ff;--danger:#b42318}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;transition:.2s}
+body.dark{--bg:#0d1117;--card:#161b22;--text:#e6edf3;--muted:#9da7b3;--border:#30363d;--accent:#58a6ff;--soft:#182b45;--danger:#ff7b72}
+header{padding:28px 20px 18px;max-width:1050px;margin:auto;display:flex;justify-content:space-between;align-items:center;gap:15px}
+h1{margin:0;font-size:28px}.sub{color:var(--muted);margin-top:5px}
+button{border:1px solid var(--border);background:var(--card);color:var(--text);padding:10px 15px;border-radius:10px;cursor:pointer;font-weight:700}
+button.primary{background:var(--accent);color:white;border-color:var(--accent)}
+main{max-width:1050px;margin:auto;padding:0 20px 50px}.tabs{display:flex;gap:8px;margin:10px 0 18px}.tab{padding:11px 15px}.tab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:22px;margin-bottom:18px}
+textarea,input{width:100%;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:11px;padding:14px;font-size:16px;outline:none}
+textarea{min-height:130px;resize:vertical}.actions{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
+.hint{color:var(--muted);font-size:14px;margin-top:9px}.result{margin-top:20px}.entrybox{background:var(--soft);border:1px solid var(--border);border-radius:12px;padding:15px;font-family:ui-monospace,monospace;font-weight:700;white-space:pre-wrap}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}.mini{border:1px solid var(--border);border-radius:12px;padding:14px}.mini b{display:block;margin-bottom:5px}.muted{color:var(--muted)}.good{color:#14804a}.bad{color:var(--danger)}ul{line-height:1.6}.section-title{margin-top:22px;margin-bottom:8px}
+.examples{display:flex;gap:8px;flex-wrap:wrap}.example{font-size:13px;padding:8px 10px}
+@media(max-width:600px){header{align-items:flex-start}.tabs{overflow:auto}}
+
+/* Modern explanation layer */
+.modern-card{margin:18px 0;padding:20px;border:1px solid var(--border,#263244);border-radius:16px;background:var(--panel,#111827)}
+.modern-card.highlight{border-color:#3d65a3;background:linear-gradient(135deg,rgba(42,91,150,.25),rgba(25,36,54,.55))}
+.modern-kicker{font-size:11px;font-weight:800;letter-spacing:.13em;color:var(--muted,#91a1b8);text-transform:uppercase;margin-bottom:9px}
+.modern-card h3{margin:0 0 8px;font-size:19px}
+.modern-card p{line-height:1.6}
+.modern-intro{color:var(--muted,#91a1b8)}
+.modern-flow{margin-top:13px;padding:12px 14px;border-radius:10px;background:rgba(255,255,255,.045);font-weight:700}
+.modern-line{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-top:1px solid var(--border,#263244);line-height:1.55}
+.modern-side{font-size:11px;font-weight:900;min-width:34px;text-align:center;padding:5px 7px;border-radius:7px}
+.modern-side.dr{background:rgba(56,189,248,.12);color:#5fd1ff}.modern-side.cr{background:rgba(244,114,182,.12);color:#ff8fc4}
+.modern-why{padding:12px 0;border-top:1px solid var(--border,#263244);line-height:1.55}
+.modern-equation{text-align:center;font-size:20px;padding:12px;border-radius:10px;background:rgba(255,255,255,.045)}
+.exam-tip{border-color:rgba(245,158,11,.35)}
+
+</style>
+</head>
+<body>
+<header>
+<div><h1>Uranus Tutor</h1><div class="sub">CA Foundation Journal Entry Tutor</div></div>
+<button id="themeBtn" type="button">🌙 Dark Mode</button>
+</header>
+
+<main>
+<div class="tabs">
+<button class="tab active" id="explainTab">Explain my entry</button>
+<button class="tab" id="generateTab">Generate an entry</button>
+</div>
+
+<section id="explainSection" class="card">
+<h2>Explain my journal entry</h2>
+<textarea id="entryInput" placeholder="Type any journal entry...
+
+Example:
+Machinery A/c Dr.
+To Cash A/c
+
+You can type it casually too:
+machinery dr to cash"></textarea>
+<div class="actions"><button class="primary" id="explainBtn">Explain Entry</button><button id="clearBtn">Clear</button></div>
+<div class="hint">You can enter one or multiple debit/credit accounts. The tutor will identify account nature and explain the Dr./Cr. treatment.</div>
+<div id="explainResult" class="result"></div>
+</section>
+
+<section id="generateSection" class="card" style="display:none">
+<h2>Generate a journal entry</h2>
+<textarea id="questionInput" placeholder="Describe the transaction in normal words...
+
+Example:
+Bought furniture for cash ₹20,000
+
+or:
+Salary of ₹5,000 is outstanding"></textarea>
+<div class="actions"><button class="primary" id="generateBtn">Generate Entry</button></div>
+<div id="generateResult" class="result"></div>
+</section>
+
+<section class="card">
+<h3>Try it</h3>
+<div class="examples">
+<button class="example" data-example="Machinery A/c Dr.&#10;To Cash A/c">Machinery Dr → Cash</button>
+<button class="example" data-example="Purchases A/c Dr.&#10;To Ram A/c">Credit Purchase</button>
+<button class="example" data-example="Cash A/c Dr.&#10;Discount Allowed A/c Dr.&#10;To Ram A/c">Compound Entry</button>
+<button class="example" data-example="Salary A/c Dr.&#10;To Outstanding Salary A/c">Outstanding Salary</button>
+</div>
+</section>
+</main>
+
+<script>
+const natureRules = [
+ {keys:['cash','bank'],nature:'Real account (asset)',dr:'Debit when cash/bank comes in.',cr:'Credit when cash/bank goes out.'},
+ {keys:['machinery','furniture','building','land','vehicle','computer','equipment','plant'],nature:'Real account (asset)',dr:'Debit when the asset comes into the business.',cr:'Credit when the asset goes out or is disposed of.'},
+ {keys:['purchases','purchase'],nature:'Nominal account / trading item',dr:'Debit because purchases increase the cost of goods purchased.',cr:'Credit when purchases are returned or reduced.'},
+ {keys:['sales','sale'],nature:'Nominal account / revenue',dr:'Debit when sales are returned or reduced.',cr:'Credit because sales are revenue.'},
+ {keys:['salary','wages','rent','insurance','advertisement','commission paid','carriage inward','carriage outward','electricity','repairs','depreciation','bad debts','discount allowed','interest paid','loss'],nature:'Nominal account (expense/loss)',dr:'Debit because it is an expense or loss.',cr:'Credit when the expense/loss is reversed or adjusted.'},
+ {keys:['commission received','interest received','discount received','income','profit'],nature:'Nominal account (income/gain)',dr:'Debit when income is reversed/adjusted.',cr:'Credit because it is income or gain.'},
+ {keys:['capital'],nature:'Capital account',dr:'Debit when capital is reduced/withdrawn.',cr:'Credit when the owner introduces capital or capital increases.'},
+ {keys:['drawings','drawing'],nature:'Drawings account (contra-capital)',dr:'Debit because drawings reduce the owner’s capital.',cr:'Credit when drawings are transferred/closed.'},
+ {keys:['debtor','debtors','ram','shyam','customer','receivable'],nature:'Personal account / asset',dr:'Debit when the person becomes a debtor or owes the business.',cr:'Credit when the debtor pays or the amount receivable decreases.'},
+ {keys:['creditor','creditors','supplier','payable'],nature:'Personal account / liability',dr:'Debit when the amount payable to the creditor decreases.',cr:'Credit when a liability to the creditor arises or increases.'},
+ {keys:['outstanding salary','outstanding rent','outstanding wages','outstanding expense'],nature:'Liability',dr:'Debit when the outstanding liability is paid/removed.',cr:'Credit because an unpaid expense creates a liability.'},
+ {keys:['share application','share application money'],nature:'Current liability / money received pending allotment',dr:'Debit when application money is transferred to share capital or refunded to applicants.',cr:'Credit when application money is received because the company temporarily owes/holds this amount pending allotment or refund.'},
+ {keys:['prepaid salary','prepaid rent','prepaid expense'],nature:'Current asset',dr:'Debit because an advance/prepaid amount is an asset.',cr:'Credit when the prepaid asset is used/adjusted.'},
+ {keys:['accumulated depreciation','provision for depreciation'],nature:'Contra-asset / accumulated adjustment',dr:'Debit when it is reduced/reversed.',cr:'Credit because accumulated depreciation reduces the asset carrying amount.'},
+ {keys:['provision for doubtful debts'],nature:'Provision / contra-asset adjustment',dr:'Debit when provision is reduced/reversed.',cr:'Credit when provision is created/increased.'}
+];
+
+function clean(s){return s.toLowerCase().replace(/[₹,]/g,' ').replace(/\b(a\/c|a\/c\.|account|accounts)\b/g,'').replace(/\s+/g,' ').trim();}
+function identify(name){
+ let n=clean(name);
+ for(const r of natureRules){
+   if(r.keys.some(k=>n===k || n.includes(k))) return r;
+ }
+ return {nature:'Specific account — needs transaction context',dr:'Debit depends on what the account represents and what happened to it.',cr:'Credit depends on what the account represents and what happened to it.'};
+}
+function splitEntry(text){
+ // Parse journal entries by their actual Dr/To structure.
+ // Important: punctuation such as "." or ":" is never an account name.
+ // Compound entries are parsed line-by-line first, then a compact one-line
+ // fallback is used for entries typed without line breaks.
+ const cleanAccount = (x) => x
+   .replace(/^[\s.,:;|+\-]+/,'')
+   .replace(/[\s.,:;|]+$/,'')
+   .replace(/(?:₹|rs\.?|inr)?\s*[\d,]+(?:\.\d+)?/gi,'')
+   .replace(/\s+/g,' ')
+   .trim();
+
+ const amount = /(?:₹|rs\.?|inr)?\s*[\d,]+(?:\.\d+)?/i;
+
+ let raw=String(text||'').replace(/\r/g,'').trim();
+ if(!raw) return null;
+
+ // Keep lines intact: this is the safest way to distinguish
+ // "Share Forfeiture A/c Dr." from the punctuation after the previous amount.
+ let lines=raw.split(/\n+/).map(x=>x.trim()).filter(Boolean);
+
+ let debitNames=[], creditNames=[];
+ let sawTo=false;
+
+ for(let line of lines){
+   // A "To" at the beginning marks the credit side.
+   if(/^\s*to\b/i.test(line)){
+     sawTo=true;
+     line=line.replace(/^\s*to\b\.?\s*/i,'').trim();
+   }
+
+   if(!sawTo && /\bdr\.?\b/i.test(line)){
+     // Normal format: Account A/c Dr. ₹amount
+     let m=line.match(/^(.*?)\s+\bdr\.?\b/i);
+     if(m){
+       let name=cleanAccount(m[1]);
+       if(name) debitNames.push(name);
+     }else{
+       let name=cleanAccount(line.replace(/\bdr\.?\b/i,''));
+       if(name) debitNames.push(name);
+     }
+   }else if(sawTo){
+     // Credit side: "To Account A/c ₹amount"
+     // Also tolerate "Account A/c Cr. ₹amount".
+     line=line.replace(/^\s*to\b\.?\s*/i,'').trim();
+     let m=line.match(/^(.*?)\s+\bcr\.?\b/i);
+     let name=m ? cleanAccount(m[1]) : cleanAccount(line);
+     if(name) creditNames.push(name);
+   }
+ }
+
+ // If the entry was pasted on one line, use the same Dr markers to
+ // recover account names without ever treating punctuation as an account.
+ if(debitNames.length===0 && creditNames.length===0){
+   let s=raw.replace(/\s+/g,' ').trim();
+   let toMatch=s.match(/\bto\b/i);
+   if(!toMatch) return null;
+
+   let left=s.slice(0,toMatch.index);
+   let right=s.slice(toMatch.index+toMatch[0].length);
+
+   const drRe=/\bdr\.?\b/ig;
+   let matches=[...left.matchAll(drRe)];
+   let cursor=0;
+
+   for(const m of matches){
+     let before=left.slice(cursor,m.index);
+     // Remove the amount belonging to the previous debit line, if any.
+     before=before.replace(/(?:₹|rs\.?|inr)?\s*[\d,]+(?:\.\d+)?\s*$/i,'');
+     let name=cleanAccount(before);
+     if(name) debitNames.push(name);
+     cursor=m.index+m[0].length;
+   }
+
+   // Credit side can contain "Account Cr. amount" or "Account amount".
+   right=right.replace(/^\s*to\b\.?\s*/i,'');
+   let cm=right.match(/^(.*?)\s+\bcr\.?\b/i);
+   let cname=cm ? cleanAccount(cm[1]) : cleanAccount(right);
+   if(cname) creditNames.push(cname);
+ }
+
+ return {debitNames,creditNames};
+}
+function accountDisplay(name){
+ return name.replace(/\b(a\/c|ac)\b/ig,'A/c').replace(/\bdr\b/ig,'').replace(/\bcr\b/ig,'').trim();
+}
+
+function transactionStory(debitNames, creditNames){
+ const all=[...debitNames,...creditNames].map(x=>clean(x));
+ const has=k=>all.some(x=>x.includes(k));
+ const D=debitNames.map(x=>clean(x)), C=creditNames.map(x=>clean(x));
+ const dhas=k=>D.some(x=>x.includes(k)), chas=k=>C.some(x=>x.includes(k));
+
+ // SHARE FORFEITURE REISSUE — high priority because "share forfeiture"
+ // alone must not make the tutor call a reissue a forfeiture.
+ if(dhas('bank') && dhas('share forfeiture') && chas('share capital')){
+   return {
+     title:'What is actually happening here?',
+     body:'These shares were <b>forfeited earlier</b> because the original shareholder did not pay the required calls. The company is now <b>reissuing those forfeited shares</b> to a new holder. The company receives ₹70,000 in cash for shares whose face value is ₹1,00,000, so the ₹30,000 difference is the <b>discount on reissue</b>. That discount is adjusted against the balance in Share Forfeiture A/c.',
+     flow:'Forfeited shares → Reissued → Bank receives ₹70,000 → Share Capital restored to ₹1,00,000 → ₹30,000 reissue discount absorbed by Share Forfeiture.'
+   };
+ }
+
+ // SHARE FORFEITURE itself — distinguish it from reissue.
+ if(dhas('share capital') && chas('share forfeiture') && (chas('calls') || chas('arrear') || chas('arrears'))){
+   return {
+     title:'What is actually happening here?',
+     body:'The company is <b>forfeiting shares</b> because the shareholder failed to pay the amount due on the calls. The company cancels the shareholder’s shares. The called-up Share Capital is removed, the unpaid call becomes a credit in Calls in Arrears, and the amount already received is retained in Share Forfeiture A/c.',
+     flow:'Shareholder fails to pay call → Shares forfeited → Called-up capital removed → Unpaid call identified → Amount already received retained as Share Forfeiture.'
+   };
+ }
+
+ if(has('bank') && has('share application')){
+   return {
+     title:'What is actually happening here?',
+     body:'The company has <b>received share application money</b> from people who have applied for shares. The money has come into the company’s bank, but the shares have not yet been finally allotted.',
+     flow:'Applicant sends application money → Bank balance increases → Company now holds an amount pending allotment/refund.'
+   };
+ }
+ if(has('bank') && has('capital')){
+   return {
+     title:'What is actually happening here?',
+     body:'Money has been introduced into the business/company. Bank increases, while the capital/equity of the business increases.',
+     flow:'Money comes in → Bank ↑ → Capital/Equity ↑.'
+   };
+ }
+ if(has('salary') && has('outstanding')){
+   return {
+     title:'What is actually happening here?',
+     body:'The employee’s salary expense belongs to the current period, but the company has not paid it yet.',
+     flow:'Salary expense happens → Expense ↑ → Amount payable to employee ↑.'
+   };
+ }
+ if(has('machinery') && has('cash')){
+   return {
+     title:'What is actually happening here?',
+     body:'The business exchanges one asset for another: it receives machinery and gives cash.',
+     flow:'Machinery comes in → Machinery ↑ → Cash goes out → Cash ↓.'
+   };
+ }
+ if(has('sales') && has('cash')){
+   return {
+     title:'What is actually happening here?',
+     body:'The business sells goods and receives cash. Cash increases and sales income increases.',
+     flow:'Goods sold → Cash ↑ → Sales income ↑.'
+   };
+ }
+ if(has('sales') && (has('debtor') || has('customer') || has('ram') || has('shyam'))){
+   return {
+     title:'What is actually happening here?',
+     body:'Goods are sold on credit. The customer has not paid immediately, so the business gets a receivable/debtor.',
+     flow:'Goods sold on credit → Customer owes business → Debtor/receivable ↑.'
+   };
+ }
+ return null;
+}
+
+function modernAccountExplanation(name, side){
+ const r=identify(name);
+ const n=clean(name);
+
+ // Context-aware Share Forfeiture reasoning.
+ if(n.includes('share forfeiture')){
+   const currentText=(document.querySelector('textarea')?.value||'').toLowerCase();
+   const parsedNow=splitEntry(currentText);
+   const ds=(parsedNow?.debitNames||[]).map(clean);
+   const cs=(parsedNow?.creditNames||[]).map(clean);
+   const reissue=ds.some(x=>x.includes('bank')) && ds.some(x=>x.includes('share forfeiture')) && cs.some(x=>x.includes('share capital'));
+   const forfeiture=ds.some(x=>x.includes('share capital')) && cs.some(x=>x.includes('share forfeiture')) &&
+                     cs.some(x=>x.includes('call'));
+
+   if(reissue){
+     return side==='Dr'
+       ? '<b>Share Forfeiture A/c</b> contains the amount that was already received from the original shareholder when the shares were forfeited. On reissue, part of this forfeited balance is used to absorb the <b>discount allowed on reissue</b>. Because that balance is being reduced, Share Forfeiture A/c is <b>debited</b>.'
+       : '<b>Share Forfeiture A/c</b> would be credited when the company first forfeits shares and retains the amount already received from the defaulting shareholder.';
+   }
+   if(forfeiture){
+     return side==='Cr'
+       ? '<b>Share Forfeiture A/c</b> represents the amount already received from the shareholder whose shares have now been forfeited. The company retains that amount, so Share Forfeiture is <b>credited</b>.'
+       : '<b>Share Forfeiture A/c</b> is debited when an available forfeiture balance is later used, such as to absorb discount on reissue.';
+   }
+ }
+
+ if(n.includes('share capital')){
+   const currentText=(document.querySelector('textarea')?.value||'').toLowerCase();
+   const parsedNow=splitEntry(currentText);
+   const ds=(parsedNow?.debitNames||[]).map(clean);
+   const cs=(parsedNow?.creditNames||[]).map(clean);
+   const reissue=ds.some(x=>x.includes('bank')) && ds.some(x=>x.includes('share forfeiture')) && cs.some(x=>x.includes('share capital'));
+   const forfeiture=ds.some(x=>x.includes('share capital')) && cs.some(x=>x.includes('share forfeiture'));
+   if(reissue){
+     return side==='Cr'
+       ? '<b>Share Capital A/c</b> is credited with the face value of the shares being reissued. The company is putting those shares back into circulation as fully paid shares, so its share capital is recognised again.'
+       : '<b>Share Capital A/c</b> is debited when the shares are forfeited because the called-up share capital relating to those shares is cancelled.';
+   }
+   if(forfeiture && side==='Dr'){
+     return '<b>Share Capital A/c</b> is debited because the company is cancelling the called-up share capital attached to the forfeited shares.';
+   }
+ }
+
+ if(n.includes('bank')){
+   if(side==='Dr') return `<b>${accountDisplay(name)}</b> is an asset. Here cash is received from the transaction → the bank balance increases → <b>Debit</b>.`;
+   return `<b>${accountDisplay(name)}</b> is an asset. Here cash is paid out → the bank balance decreases → <b>Credit</b>.`;
+ }
+
+ if(n.includes('calls in arrears') || n.includes('call in arrears')){
+   return side==='Cr'
+     ? '<b>Calls in Arrears A/c</b> represents the amount of call money that the shareholder failed to pay. The unpaid call is being recognised as the amount still due, so it is <b>credited</b> in this forfeiture entry.'
+     : '<b>Calls in Arrears A/c</b> is debited when the previously unpaid call is later received/cleared.';
+ }
+
+ if(n.includes('securities premium')){
+   return side==='Cr'
+     ? '<b>Securities Premium A/c</b> represents the amount received above the face value of shares. Premium increases the company’s equity reserve, so it is <b>credited</b>.'
+     : '<b>Securities Premium A/c</b> is debited only when a permitted utilisation/adjustment of the premium is being recorded.';
+ }
+
+ if(n.includes('share application')){
+   if(side==='Cr'){
+     return '<b>Share Application A/c is a temporary liability.</b> The company has received money from applicants, but until allotment it has an obligation to deal with that money — normally allot the shares or refund the amount. A liability has increased, so it is <b>credited</b>.';
+   }
+   return '<b>Share Application A/c is a temporary liability.</b> When the money is transferred to share capital after allotment, or refunded, that liability is reduced, so the account is <b>debited</b>.';
+ }
+ if(r.nature.includes('asset') || r.nature.includes('Real account')){
+   if(side==='Dr') return `<b>${accountDisplay(name)}</b> is an asset. Here the asset is increasing/coming into the business → <b>Debit</b>.`;
+   return `<b>${accountDisplay(name)}</b> is an asset. Here the asset is decreasing/going out → <b>Credit</b>.`;
+ }
+ if(r.nature.includes('Liability')){
+   if(side==='Cr') return `<b>${accountDisplay(name)}</b> is a liability. The amount the business owes/payable has increased → <b>Credit</b>.`;
+   return `<b>${accountDisplay(name)}</b> is a liability. The obligation has decreased/been settled → <b>Debit</b>.`;
+ }
+ if(r.nature.includes('expense')){
+   return side==='Dr'
+     ? `<b>${accountDisplay(name)}</b> is an expense/loss. The expense has increased → <b>Debit</b>.`
+     : `<b>${accountDisplay(name)}</b> is an expense/loss. A reduction/reversal is being recorded → <b>Credit</b>.`;
+ }
+ if(r.nature.includes('income') || r.nature.includes('revenue')){
+   return side==='Cr'
+     ? `<b>${accountDisplay(name)}</b> is income/revenue. Income has increased → <b>Credit</b>.`
+     : `<b>${accountDisplay(name)}</b> is income/revenue. A reduction/reversal is being recorded → <b>Debit</b>.`;
+ }
+ if(r.nature.includes('Capital')){
+   return side==='Cr'
+     ? `<b>${accountDisplay(name)}</b> is capital/equity. Capital has increased → <b>Credit</b>.`
+     : `<b>${accountDisplay(name)}</b> is capital/equity. Capital has decreased → <b>Debit</b>.`;
+ }
+ return `<b>${accountDisplay(name)}</b> needs transaction context before its modern treatment can be determined confidently.`;
+}
+
+function oppositeExplanation(name, side){
+ const r=identify(name), n=clean(name);
+ if(n.includes('share application')){
+   return side==='Cr'
+     ? 'It is not debited because the company has just received the application money; the liability has increased, not decreased.'
+     : 'It is not credited because the application-money liability is being reduced/settled.';
+ }
+ if(r.nature.includes('asset')){
+   return side==='Dr'
+     ? 'We do not credit it because the asset has increased, not decreased.'
+     : 'We do not debit it because the asset has decreased, not increased.';
+ }
+ if(r.nature.includes('Liability')){
+   return side==='Cr'
+     ? 'We do not debit it because the liability has increased, not decreased.'
+     : 'We do not credit it because the liability has decreased, not increased.';
+ }
+ return side==='Dr'
+   ? 'The opposite side would represent a different effect on this account.'
+   : 'The opposite side would represent a different effect on this account.';
+}
+
+function renderExplain(text){
+ const parsed=splitEntry(text);
+ if(!parsed) return `<div class="mini"><b class="bad">I couldn't read the structure.</b><p>Use a format like <b>Machinery A/c Dr. To Cash A/c</b>.</p></div>`;
+ let html=`<div class="entrybox">${text.trim()}</div>`;
+ html+=`<div class="section-title"><h3>What this entry means</h3></div><p>This entry records a transaction in which the account(s) on the debit side are debited and the account(s) on the credit side are credited. The reasons below are based on the nature of each account.</p>`;
+ html+=`<div class="section-title"><h3>Debit side</h3></div><div class="grid">`;
+ parsed.debitNames.forEach(n=>{let r=identify(n);html+=`<div class="mini"><b>${accountDisplay(n)}</b><div class="muted">${r.nature}</div><p class="good">Dr: ${r.dr}</p><p>${r.cr}</p></div>`});
+ html+=`</div><div class="section-title"><h3>Credit side</h3></div><div class="grid">`;
+ parsed.creditNames.forEach(n=>{let r=identify(n);html+=`<div class="mini"><b>${accountDisplay(n)}</b><div class="muted">${r.nature}</div><p>${r.dr}</p><p class="good">Cr: ${r.cr}</p></div>`});
+ html+=`</div><div class="section-title"><h3>Simple explanation</h3></div><p>`;
+ if(parsed.debitNames.length===1 && parsed.creditNames.length===1){
+   let d=accountDisplay(parsed.debitNames[0]), c=accountDisplay(parsed.creditNames[0]);
+   html+=`<b>${d}</b> is debited because the transaction affects it in the way described above, while <b>${c}</b> is credited because the transaction affects it in the corresponding way.`;
+ } else html+=`This is a compound entry: multiple accounts are affected on one or both sides. Each account has been explained separately above.`;
+ html+=`</p>`;
+
+ let story=transactionStory(parsed.debitNames,parsed.creditNames);
+ if(story){
+   html+=`<div class="modern-card highlight">
+     <div class="modern-kicker">WHAT IS ACTUALLY HAPPENING?</div>
+     <h3>${story.title}</h3>
+     <p>${story.body}</p>
+     <div class="modern-flow">${story.flow}</div>
+   </div>`;
+ }
+
+ html+=`<div class="modern-card">
+   <div class="modern-kicker">MODERN APPROACH</div>
+   <p class="modern-intro">Instead of memorising the entry, identify <b>what each account is</b> and <b>what happened to it</b>.</p>`;
+ parsed.debitNames.forEach(n=>{
+   html+=`<div class="modern-line"><span class="modern-side dr">DR</span><div>${modernAccountExplanation(n,'Dr')}</div></div>`;
+ });
+ parsed.creditNames.forEach(n=>{
+   html+=`<div class="modern-line"><span class="modern-side cr">CR</span><div>${modernAccountExplanation(n,'Cr')}</div></div>`;
+ });
+ html+=`</div>`;
+
+ html+=`<div class="modern-card">
+   <div class="modern-kicker">WHY NOT THE OTHER SIDE?</div>`;
+ parsed.debitNames.forEach(n=>{html+=`<div class="modern-why"><b>Why not Credit ${accountDisplay(n)}?</b><br>${oppositeExplanation(n,'Dr')}</div>`});
+ parsed.creditNames.forEach(n=>{html+=`<div class="modern-why"><b>Why not Debit ${accountDisplay(n)}?</b><br>${oppositeExplanation(n,'Cr')}</div>`});
+ html+=`</div>`;
+
+ html+=`<div class="modern-card">
+   <div class="modern-kicker">TRADITIONAL APPROACH</div>
+   <p><b>Real accounts:</b> Debit what comes in, credit what goes out.<br>
+   <b>Personal accounts:</b> Debit the receiver, credit the giver.<br>
+   <b>Nominal accounts:</b> Debit expenses/losses, credit incomes/gains.</p>
+   <p>This traditional rule and the modern “nature + increase/decrease” approach are two ways of understanding the same entry.</p>
+ </div>`;
+
+ html+=`<div class="modern-card">
+   <div class="modern-kicker">ACCOUNTING EQUATION VIEW</div>
+   <div class="modern-equation"><b>Assets = Capital + Liabilities</b></div>
+   <p>Ask: did an asset, liability, capital, income or expense change? That gives you the economic reason behind the Dr/Cr.</p>
+ </div>`;
+
+ html+=`<div class="modern-card exam-tip">
+   <div class="modern-kicker">CA FOUNDATION MEMORY TRICK</div>
+   <p><b>Don't ask only “What is the rule?”</b><br>
+   Ask: <b>What is this account? What happened to it? Why did that change require a debit or credit?</b></p>
+ </div>`;
+
+ return html;
+}
+function generate(q){
+ let s=clean(q), entry=null, why='';
+ const has=(...x)=>x.some(k=>s.includes(k));
+ if(has('furniture','machinery','building','vehicle','computer') && has('cash','paid','payment')){
+   let asset=has('furniture')?'Furniture':has('machinery')?'Machinery':has('building')?'Building':has('vehicle')?'Vehicle':'Computer';
+   entry=`${asset} A/c Dr.\\n    To Cash/Bank A/c`; why=`${asset} is an asset coming into the business, while cash/bank is paid out.`;
+ } else if(has('goods','purchased','bought') && has('credit','on credit','from')){
+   entry=`Purchases A/c Dr.\\n    To Creditor/Supplier A/c`; why='Goods are purchased and payment is due to the supplier.';
+ } else if(has('goods','purchased','bought') && has('cash','paid')){
+   entry=`Purchases A/c Dr.\\n    To Cash A/c`; why='Goods are purchased for cash.';
+ } else if(has('salary') && has('outstanding','due','unpaid')){
+   entry=`Salary A/c Dr.\\n    To Outstanding Salary A/c`; why='Salary is an expense incurred but not yet paid, creating a liability.';
+ } else if(has('salary') && has('paid','cash','bank')){
+   entry=`Salary A/c Dr.\\n    To Cash/Bank A/c`; why='Salary expense is paid.';
+ } else if(has('rent') && has('outstanding','due','unpaid')){
+   entry=`Rent A/c Dr.\\n    To Outstanding Rent A/c`; why='Rent is due but unpaid, so a liability arises.';
+ } else if(has('rent') && has('paid','cash','bank')){
+   entry=`Rent A/c Dr.\\n    To Cash/Bank A/c`; why='Rent expense is paid.';
+ } else if(has('capital') && has('introduced','brought','started')){
+   entry=`Cash/Bank A/c Dr.\\n    To Capital A/c`; why='Capital is introduced into the business.';
+ } else if(has('drawings','personal') && has('cash','withdrawn')){
+   entry=`Drawings A/c Dr.\\n    To Cash/Bank A/c`; why='Cash is withdrawn by the proprietor for personal use.';
+ } else if(has('depreciation')){
+   entry=`Depreciation A/c Dr.\\n    To Accumulated Depreciation A/c`; why='Depreciation is an expense/loss and accumulated depreciation reduces the asset carrying amount.';
+ } else if(has('bad debt','bad debts')){
+   entry=`Bad Debts A/c Dr.\\n    To Debtor's A/c`; why='The debtor amount has become irrecoverable.';
+ } else if(has('cash','received') && has('debtor','customer')){
+   entry=`Cash/Bank A/c Dr.\\n    To Debtor's A/c`; why='Cash is received from a debtor.';
+ }
+ if(!entry) return `<div class="mini"><b class="bad">I need a little more transaction detail.</b><p>Try describing what happened, for example: <b>“Bought furniture for cash”</b> or <b>“Salary is outstanding.”</b></p></div>`;
+ return `<div class="entrybox">${entry}</div><h3>Why?</h3><p>${why}</p><h3>Account treatment</h3>${renderExplain(entry)}`;
+}
+
+document.getElementById('themeBtn').onclick=()=>{
+ document.body.classList.toggle('dark');
+ const dark=document.body.classList.contains('dark');
+ document.getElementById('themeBtn').textContent=dark?'☀️ Light Mode':'🌙 Dark Mode';
+ localStorage.setItem('drcr-theme',dark?'dark':'light');
+};
+if(localStorage.getItem('drcr-theme')==='dark'){
+ document.body.classList.add('dark');document.getElementById('themeBtn').textContent='☀️ Light Mode';
+}
+
+document.getElementById('explainBtn').onclick=()=>{
+ document.getElementById('explainResult').innerHTML=renderExplain(document.getElementById('entryInput').value);
+};
+document.getElementById('clearBtn').onclick=()=>{
+ document.getElementById('entryInput').value='';document.getElementById('explainResult').innerHTML='';
+};
+document.getElementById('generateBtn').onclick=()=>{
+ document.getElementById('generateResult').innerHTML=generate(document.getElementById('questionInput').value);
+};
+document.querySelectorAll('.example').forEach(b=>b.onclick=()=>{
+ document.getElementById('entryInput').value=b.dataset.example;
+ document.getElementById('explainBtn').click();
+});
+document.getElementById('explainTab').onclick=()=>{
+ document.getElementById('explainSection').style.display='block';document.getElementById('generateSection').style.display='none';
+ document.getElementById('explainTab').classList.add('active');document.getElementById('generateTab').classList.remove('active');
+};
+document.getElementById('generateTab').onclick=()=>{
+ document.getElementById('explainSection').style.display='none';document.getElementById('generateSection').style.display='block';
+ document.getElementById('generateTab').classList.remove('active');document.getElementById('explainTab').classList.remove('active');document.getElementById('generateTab').classList.add('active');
+};
+</script>
+
+<script>
+(function(){
+const K=[
+["Rectification of Errors","Rectification compares the entry actually passed with the entry that should have been passed. Reverse the wrong effect and give the correct effect. Suspense A/c is used where only one side of an error remains to be corrected.","Do not blindly debit the account named in the question."],
+["Purchase Return","Goods bought earlier are returned to the supplier. Purchase Returns reduces purchases, while the supplier's payable is reduced.","Do not confuse Purchase Return with Sales Return."],
+["Sales Return","Goods sold earlier are returned by the customer. Sales Return reduces sales, while the customer's receivable is reduced.","Sales Return is not Purchase Return."],
+["Bad Debts Recovered","An amount previously written off as bad is recovered. Bank/Cash increases and the recovery is income.","Do not automatically reopen the debtor account."],
+["Provision for Doubtful Debts","A provision estimates the expected loss on doubtful receivables. The required new provision is compared with the old provision and only the difference is adjusted.","Do not charge the entire new provision to P&L when an old provision already exists."],
+["Forfeiture of Shares","Shares are cancelled because required call money was not paid. Share Capital is debited for the called-up amount; unpaid calls are credited and the amount already received is credited to Share Forfeiture.","Forfeiture is not a refund."],
+["Reissue of Forfeited Shares","Forfeited shares are issued again. Bank is debited for cash received, Share Capital is credited with face value, and any permitted discount is debited to Share Forfeiture.","Profit on reissue goes to Capital Reserve, not normal P&L."],
+["Calls in Arrears","A shareholder has not paid an amount already called by the company. It represents unpaid called-up money.","Do not confuse it with Calls in Advance."],
+["Calls in Advance","A shareholder pays before the company makes the relevant call. Bank increases, but the amount is not Share Capital until the call becomes due.","Calls in advance is not immediately credited to Share Capital."],
+["Share Application","Money is received from applicants before final allotment. Bank increases and the application account represents money pending allotment/refund/adjustment.","Application money is not automatically Share Capital on receipt."],
+["Share Allotment","After shares are allotted, the allotment amount becomes due. When received, Bank increases and the allotment receivable is cleared.","Separate amount becoming due from amount actually received."],
+["Securities Premium","Shares issued above face value create premium. Total amount due/received is debited; Share Capital gets face value and Securities Premium gets the excess.","Premium is not part of Share Capital."],
+["Debenture Application","Application money is received before debenture allotment. Bank increases while the application account is pending allotment/refund/adjustment.","Do not treat application money as debentures before allotment."],
+["Issue of Debentures","The company raises borrowed funds. Bank/receivable is debited and Debentures are credited because debentures are a liability.","Debentures are borrowings, not share capital."],
+["Debentures at Premium","The company receives more than face value. Debit the total amount and credit Debentures at face value plus Securities Premium for the excess.","Premium does not increase the face value."],
+["Debentures at Discount","The company receives less than face value. Debit the amount received/due, credit Debentures with face value and recognise the discount.","Discount is a finance cost, not a reduction of face value."],
+["Redemption of Debentures","The company repays debenture holders. The liability is removed/reduced and Bank is credited when payment is made. Premium on redemption creates an additional payable.","Keep redemption premium separate from the original liability."],
+["Bills Receivable","A debtor accepts a bill, converting an ordinary receivable into a Bills Receivable asset.","Receiving a bill is not the same as receiving cash."],
+["Bills Payable","The business accepts a bill drawn by a creditor, creating a formal liability payable on maturity.","Acceptance is not immediate payment."],
+["Discounting of Bill","A Bills Receivable is given to the bank before maturity for immediate proceeds after bank charges. Bank is debited, discounting charges are debited and Bills Receivable is credited.","Discounting is not retirement."],
+["Dishonour of Bill","The bill is not paid at maturity. The amount becomes recoverable again from the liable party and noting charges may be added.","Dishonour does not simply cancel the amount due."],
+["Renewal of Bill","The old bill is cancelled and a new bill is accepted, usually with interest. Record cancellation, interest and the new bill.","Do not record only the new bill."],
+["Retirement of Bill","A bill is paid before maturity, usually with a rebate. The bill is settled early and the rebate is recorded.","Retirement is before maturity; dishonour is failure at maturity."],
+["Consignment","Goods are sent to a consignee for sale while ownership remains with the consignor until sale. Sending goods is not an ordinary sale.","Do not credit Sales merely because goods were sent."],
+["Joint Venture","Parties temporarily undertake a specific venture and share its result. Record purchases, expenses, sales and co-venturer balances according to the method used.","A joint venture is not automatically a partnership."],
+["Goodwill in Partnership","Goodwill reflects reputation and expected future earning capacity. On admission, goodwill premium generally compensates sacrificing partners.","Do not distribute goodwill premium using the new ratio when sacrificing ratio is required."],
+["Revaluation of Partnership","Increase in an asset or decrease in a liability is a gain; decrease in an asset or increase in a liability is a loss. Net result goes to old partners in old ratio.","Revaluation profit is not shared in the new ratio."],
+["Outstanding Expense","An expense belongs to the current period but has not been paid. Expense is recognised and a liability arises.","Outstanding is not prepaid."],
+["Prepaid Expense","Cash was paid, but part relates to a future period. The future portion is an asset and current-period expense is reduced.","Cash payment does not mean the whole amount is current expense."],
+["Depreciation","Depreciation allocates the cost of a fixed asset over its useful life. It is an expense and reduces carrying amount directly or through accumulated depreciation.","Depreciation is not a cash payment."],
+["Closing Stock","Unsold goods at period-end are an asset providing future benefit and affect cost of goods sold/profit.","Treatment differs depending on whether closing stock is inside or outside the trial balance."],
+["Commission Received","Commission earned is income. Bank/Cash or receivable is debited and commission income is credited.","Commission received is income; commission paid is expense."],
+["Commission Paid","Commission paid is an expense. Debit commission expense and credit Bank/Cash or the payable.","Do not treat it as income."],
+["Discount Allowed","A customer settles for less than the amount receivable. The difference is Discount Allowed, an expense.","Discount Allowed is an expense."],
+["Discount Received","A supplier accepts less than the amount payable. The benefit is Discount Received, an income.","Discount Received is income."],
+["Drawings","The proprietor takes business cash, goods or another resource for personal use. Drawings is debited and the asset/goods account is credited as appropriate.","Drawings is not a business expense."],
+["Capital Introduced","The owner contributes cash or another asset. The business asset increases and the owner's equity increases.","Capital introduced is not revenue income."],
+["Loss by Fire/Theft","A business asset destroyed or stolen is removed from the books and the resulting loss is recognised, with any insurance claim treated separately.","Do not treat a loss as a normal purchase or sale."],
+["Insurance Claim","An admitted claim is an amount receivable from the insurer. The uninsured portion remains a loss.","An admitted claim is not cash until actually received."],
+["Hire Purchase","An asset is acquired under instalments, with interest separated from the asset's cash price.","Do not capitalise every instalment payment as asset cost."],
+["Not-for-Profit Organisation","Revenue receipts and expenses affect the current period surplus/deficit; capital receipts are treated according to their nature.","Not every receipt is income and not every payment is expense."]
+];
+
+function addPanel(){
+ const fields=[...document.querySelectorAll("textarea,input")];
+ const f=fields.find(x=>/entry|journal|explain/i.test((x.placeholder||"")+" "+(x.id||"")+" "+(x.name||"")))||fields[0];
+ if(!f||document.getElementById("uranus-master")) return;
+ const p=document.createElement("div"); p.id="uranus-master";
+ p.style.cssText="margin-top:14px;padding:16px;border:1px solid rgba(127,127,127,.25);border-radius:14px;background:rgba(127,127,127,.06);display:none";
+ f.parentElement.appendChild(p);
+ function render(){
+  const t=(f.value||"").toLowerCase();
+  const words=t.replace(/[₹,]/g,' ').split(/\s+/).filter(Boolean);
+  let hit=null;
+  if(t.includes('share forfeiture') && t.includes('bank') && t.includes('share capital')){
+    hit=["Reissue of Forfeited Shares","These shares were forfeited earlier because the original holder failed to pay calls. They are now being reissued. Bank receives the reissue price, Share Capital is credited with face value, and any discount on reissue is adjusted against Share Forfeiture.","Do not call this the original forfeiture entry: forfeiture happened earlier; this entry is the reissue."];
+  } else if(t.includes('share capital') && t.includes('share forfeiture') && (t.includes('calls in arrears') || t.includes('call in arrears'))){
+    hit=["Forfeiture of Shares","The company is cancelling shares because the shareholder failed to pay a call. Share Capital is debited, the unpaid call is credited, and the amount already received is credited to Share Forfeiture.","Forfeiture and reissue are two separate stages."];
+  } else {
+    hit=K.find(x=>x[0].toLowerCase().split(/[ /]/).some(w=>w.length>4&&t.includes(w)));
+  }
+  if(!hit){p.style.display="none";return;}
+  p.style.display="block";
+  p.innerHTML="<b>CA Foundation Master Mode · "+hit[0]+"</b><br><br><b>What is happening?</b><br>"+hit[1]+"<br><br><b>Common trap:</b><br>"+hit[2];
+ }
+ f.addEventListener("input",render); render();
+}
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",addPanel);else addPanel();
+window.UranusCAFoundation={knowledge:K};
+})();
+</script>
+
+<style>
+#uranus-parser-note{font-size:12px;opacity:.72;margin-top:8px}
+</style>
+<script>
+(function(){
+ function addNote(){
+   if(document.getElementById('uranus-parser-note')) return;
+   const areas=[...document.querySelectorAll('textarea')];
+   const a=areas.find(x=>/journal|entry/i.test((x.placeholder||'')+' '+(x.id||'')));
+   if(!a) return;
+   const n=document.createElement('div');
+   n.id='uranus-parser-note';
+   n.textContent='Smart parser: reads Dr./To/Cr structure and ignores punctuation, ₹ amounts and formatting marks.';
+   a.parentElement.appendChild(n);
+ }
+ if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',addNote);
+ else addNote();
+})();
+</script>
+</body>
+</html>
