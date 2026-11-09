@@ -1,0 +1,1 @@
+This is a simple project created for students, including myself, who struggle with understanding and preparing journal entries. Journal entries are an important part of accounting, and having a clear understanding of them is essential for building a strong foundation in accounting.
